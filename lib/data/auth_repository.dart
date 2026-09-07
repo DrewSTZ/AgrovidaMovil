@@ -20,6 +20,7 @@ class LoginResult {
 
 class AuthenticatedUser {
   const AuthenticatedUser({
+    this.publicId = '',
     required this.username,
     required this.email,
     required this.names,
@@ -27,6 +28,7 @@ class AuthenticatedUser {
     required this.role,
   });
 
+  final String publicId;
   final String username;
   final String email;
   final String names;
@@ -47,6 +49,7 @@ class AuthenticatedUser {
     final username = read('username');
     final email = read('email');
     return AuthenticatedUser(
+      publicId: read('publicId'),
       username: username.isNotEmpty ? username : fallbackIdentifier,
       email: email.isNotEmpty
           ? email
@@ -56,6 +59,28 @@ class AuthenticatedUser {
       role: read('role'),
     );
   }
+
+  factory AuthenticatedUser.fromStoredData(Map<String, Object?> data) {
+    String read(String key) => data[key]?.toString().trim() ?? '';
+
+    return AuthenticatedUser(
+      publicId: read('publicId'),
+      username: read('username'),
+      email: read('email'),
+      names: read('names'),
+      lastNames: read('lastNames'),
+      role: read('role'),
+    );
+  }
+
+  Map<String, Object?> toStoredData() => {
+    'publicId': publicId,
+    'username': username,
+    'email': email,
+    'names': names,
+    'lastNames': lastNames,
+    'role': role,
+  };
 
   String get displayName {
     final fullName = [

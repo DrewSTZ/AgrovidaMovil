@@ -15,7 +15,7 @@ class InicioPage extends StatefulWidget {
   final TerrenoStore terrenoStore;
   final ValueChanged<int> onOpenSection;
   final AuthenticatedUser authenticatedUser;
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   @override
   State<InicioPage> createState() => _InicioPageState();
@@ -283,7 +283,7 @@ class _InicioPageState extends State<InicioPage>
       ),
     );
 
-    if (shouldLogout == true && mounted) widget.onLogout();
+    if (shouldLogout == true && mounted) await widget.onLogout();
   }
 }
 
@@ -291,7 +291,7 @@ class _AccountSummary extends StatelessWidget {
   const _AccountSummary({required this.user, required this.onLogout});
 
   final AuthenticatedUser user;
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   @override
   Widget build(BuildContext context) {

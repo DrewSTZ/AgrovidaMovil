@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'data/terreno_repository.dart';
 import 'data/auth_repository.dart';
+import 'data/session_repository.dart';
 import 'screens/app_shell.dart';
 import 'screens/login_page.dart';
 import 'screens/splash_page.dart';
@@ -15,10 +16,16 @@ Future<void> main() async {
 }
 
 class AgroVidaApp extends StatelessWidget {
-  const AgroVidaApp({super.key, this.terrenoStore, this.authRepository});
+  const AgroVidaApp({
+    super.key,
+    this.terrenoStore,
+    this.authRepository,
+    this.sessionRepository,
+  });
 
   final TerrenoStore? terrenoStore;
   final AuthRepository? authRepository;
+  final SessionRepository? sessionRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -153,16 +160,22 @@ class AgroVidaApp extends StatelessWidget {
       home: _AppEntry(
         terrenoStore: terrenoStore,
         authRepository: authRepository,
+        sessionRepository: sessionRepository,
       ),
     );
   }
 }
 
 class _AppEntry extends StatefulWidget {
-  const _AppEntry({this.terrenoStore, this.authRepository});
+  const _AppEntry({
+    this.terrenoStore,
+    this.authRepository,
+    this.sessionRepository,
+  });
 
   final TerrenoStore? terrenoStore;
   final AuthRepository? authRepository;
+  final SessionRepository? sessionRepository;
 
   @override
   State<_AppEntry> createState() => _AppEntryState();
@@ -173,7 +186,9 @@ class _AppEntryState extends State<_AppEntry> {
   late final bool _ownsStore;
   late final AuthRepository _authRepository;
   late final bool _ownsAuthRepository;
-  bool _showSplash = true;
+  late final SessionRepository _sessionRepository;
+  bool _splashFinished = false;
+  bool _sessionRestored = false;
   AuthenticatedUser? _authenticatedUser;
 
   @override
@@ -184,6 +199,34 @@ class _AppEntryState extends State<_AppEntry> {
         widget.terrenoStore ?? TerrenoStore(SqliteTerrenoRepository.instance);
     _ownsAuthRepository = widget.authRepository == null;
     _authRepository = widget.authRepository ?? HttpAuthRepository();
+    _sessionRepository = widget.sessionRepository ?? SecureSessionRepository();
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    final user = await _sessionRepository.read();
+    if (!mounted) return;
+    setState(() {
+      _authenticatedUser = user;
+      _sessionRestored = true;
+    });
+  }
+
+  Future<void> _handleLogin(AuthenticatedUser user) async {
+    try {
+      await _sessionRepository.save(user);
+    } catch (_) {
+      // El acceso continúa aunque el almacenamiento seguro no esté disponible.
+    }
+    if (mounted) setState(() => _authenticatedUser = user);
+  }
+
+  Future<void> _logout() async {
+    try {
+      await _sessionRepository.clear();
+    } finally {
+      if (mounted) setState(() => _authenticatedUser = null);
+    }
   }
 
   @override
@@ -196,11 +239,11 @@ class _AppEntryState extends State<_AppEntry> {
   @override
   Widget build(BuildContext context) {
     final Widget page;
-    if (_showSplash) {
+    if (!_splashFinished || !_sessionRestored) {
       page = SplashPage(
         key: const ValueKey('splash'),
         onFinished: () {
-          if (mounted) setState(() => _showSplash = false);
+          if (mounted) setState(() => _splashFinished = true);
         },
       );
     } else if (_authenticatedUser case final authenticatedUser?) {
@@ -209,13 +252,13 @@ class _AppEntryState extends State<_AppEntry> {
         terrenoStore: _terrenoStore,
         ownsStore: false,
         authenticatedUser: authenticatedUser,
-        onLogout: () => setState(() => _authenticatedUser = null),
+        onLogout: _logout,
       );
     } else {
       page = LoginPage(
         key: const ValueKey('login'),
         authRepository: _authRepository,
-        onContinue: (user) => setState(() => _authenticatedUser = user),
+        onContinue: _handleLogin,
       );
     }
 

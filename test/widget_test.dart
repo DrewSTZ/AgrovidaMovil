@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:agrovida_movil/data/terreno_repository.dart';
 import 'package:agrovida_movil/data/auth_repository.dart';
+import 'package:agrovida_movil/data/session_repository.dart';
 import 'package:agrovida_movil/main.dart';
 import 'package:agrovida_movil/models/terreno.dart';
 import 'package:agrovida_movil/screens/app_shell.dart';
@@ -21,6 +22,7 @@ void main() {
       AgroVidaApp(
         terrenoStore: store,
         authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: _MemorySessionRepository(),
       ),
     );
 
@@ -43,6 +45,7 @@ void main() {
       AgroVidaApp(
         terrenoStore: store,
         authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: _MemorySessionRepository(),
       ),
     );
     await tester.pumpAndSettle();
@@ -84,6 +87,7 @@ void main() {
       AgroVidaApp(
         terrenoStore: store,
         authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: _MemorySessionRepository(),
       ),
     );
     await tester.pumpAndSettle();
@@ -112,6 +116,7 @@ void main() {
       AgroVidaApp(
         terrenoStore: store,
         authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: _MemorySessionRepository(),
       ),
     );
     await tester.pumpAndSettle();
@@ -129,7 +134,11 @@ void main() {
     addTearDown(store.dispose);
 
     await tester.pumpWidget(
-      AgroVidaApp(terrenoStore: store, authRepository: _FailedAuthRepository()),
+      AgroVidaApp(
+        terrenoStore: store,
+        authRepository: _FailedAuthRepository(),
+        sessionRepository: _MemorySessionRepository(),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -150,11 +159,13 @@ void main() {
   ) async {
     final store = TerrenoStore(_MemoryTerrenoRepository());
     addTearDown(store.dispose);
+    final sessionRepository = _MemorySessionRepository();
 
     await tester.pumpWidget(
       AgroVidaApp(
         terrenoStore: store,
         authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: sessionRepository,
       ),
     );
     await tester.pumpAndSettle();
@@ -164,6 +175,7 @@ void main() {
     expect(find.text('Sesión conectada'), findsOneWidget);
     expect(find.text('Juan Pérez'), findsOneWidget);
     expect(find.text('juan@gmail.com'), findsOneWidget);
+    expect(sessionRepository.user?.email, 'juan@gmail.com');
 
     await tester.tap(find.byTooltip('Cerrar sesión'));
     await tester.pumpAndSettle();
@@ -174,6 +186,38 @@ void main() {
 
     expect(find.text('Bienvenido'), findsOneWidget);
     expect(find.text('Sesión conectada'), findsNothing);
+    expect(sessionRepository.user, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('restaura la cuenta guardada al volver a abrir la aplicación', (
+    tester,
+  ) async {
+    final store = TerrenoStore(_MemoryTerrenoRepository());
+    addTearDown(store.dispose);
+    final sessionRepository = _MemorySessionRepository(
+      user: const AuthenticatedUser(
+        publicId: 'usuario-publico-1',
+        username: 'juan',
+        email: 'juan@gmail.com',
+        names: 'Juan',
+        lastNames: 'Pérez',
+        role: 'Trabajador',
+      ),
+    );
+
+    await tester.pumpWidget(
+      AgroVidaApp(
+        terrenoStore: store,
+        authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: sessionRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bienvenido'), findsNothing);
+    expect(find.text('Sesión conectada'), findsOneWidget);
+    expect(find.text('Juan Pérez'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -212,7 +256,7 @@ void main() {
             lastNames: 'Pérez',
             role: 'Trabajador',
           ),
-          onLogout: () {},
+          onLogout: () async {},
           mapTileProviderFactory: _WidgetTestTiles.new,
         ),
       ),
@@ -255,6 +299,8 @@ Future<void> _completeLogin(WidgetTester tester) async {
     find.widgetWithText(TextFormField, 'Contraseña'),
     'MiClave123',
   );
+  await tester.ensureVisible(find.text('Iniciar sesión'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Iniciar sesión'));
   await tester.pump();
 }
@@ -297,6 +343,21 @@ class _FailedAuthRepository implements AuthRepository {
 
   @override
   void dispose() {}
+}
+
+class _MemorySessionRepository implements SessionRepository {
+  _MemorySessionRepository({this.user});
+
+  AuthenticatedUser? user;
+
+  @override
+  Future<void> clear() async => user = null;
+
+  @override
+  Future<AuthenticatedUser?> read() async => user;
+
+  @override
+  Future<void> save(AuthenticatedUser user) async => this.user = user;
 }
 
 class _MemoryTerrenoRepository implements TerrenoRepository {

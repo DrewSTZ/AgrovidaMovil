@@ -23,7 +23,7 @@ class AppShell extends StatefulWidget {
   final TerrenoStore terrenoStore;
   final bool ownsStore;
   final AuthenticatedUser authenticatedUser;
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
   final TileProvider Function()? mapTileProviderFactory;
 
   @override
