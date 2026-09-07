@@ -2,7 +2,7 @@ class ApiConfig {
   const ApiConfig._();
 
   static const _mobileBaseUrl =
-      'https://breeding-brute-antirust.ngrok-free.dev/Mobile';
+      'https://breeding-brute-antirust.ngrok-free.dev/AgroVida/Mobile';
 
   static final loginUrl = Uri.parse('$_mobileBaseUrl/MobileLogin.php');
 }

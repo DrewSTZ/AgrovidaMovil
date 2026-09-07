@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/auth_repository.dart';
 import '../state/terreno_store.dart';
 
 class InicioPage extends StatefulWidget {
@@ -7,10 +8,14 @@ class InicioPage extends StatefulWidget {
     super.key,
     required this.terrenoStore,
     required this.onOpenSection,
+    required this.authenticatedUser,
+    required this.onLogout,
   });
 
   final TerrenoStore terrenoStore;
   final ValueChanged<int> onOpenSection;
+  final AuthenticatedUser authenticatedUser;
+  final VoidCallback onLogout;
 
   @override
   State<InicioPage> createState() => _InicioPageState();
@@ -109,7 +114,12 @@ class _InicioPageState extends State<InicioPage>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
+                  _AccountSummary(
+                    user: widget.authenticatedUser,
+                    onLogout: _confirmLogout,
+                  ),
+                  const SizedBox(height: 18),
                   const Text(
                     'Resumen de campo',
                     style: TextStyle(
@@ -244,6 +254,123 @@ class _InicioPageState extends State<InicioPage>
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.logout_rounded),
+        title: const Text('Cerrar sesión'),
+        content: Text(
+          '¿Deseas cerrar la sesión de '
+          '${widget.authenticatedUser.displayName}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true && mounted) widget.onLogout();
+  }
+}
+
+class _AccountSummary extends StatelessWidget {
+  const _AccountSummary({required this.user, required this.onLogout});
+
+  final AuthenticatedUser user;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 21,
+            backgroundColor: Colors.white,
+            foregroundColor: Theme.of(context).colorScheme.primary,
+            child: Text(
+              user.initials,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF8FE0A8),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Sesión conectada',
+                      style: TextStyle(
+                        color: Color(0xFFDCECE1),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  user.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (user.accountIdentifier.isNotEmpty)
+                  Text(
+                    user.accountIdentifier,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Cerrar sesión',
+            onPressed: onLogout,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.12),
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.logout_rounded, size: 21),
           ),
         ],
       ),

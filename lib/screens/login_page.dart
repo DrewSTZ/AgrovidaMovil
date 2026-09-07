@@ -10,7 +10,7 @@ class LoginPage extends StatefulWidget {
     required this.authRepository,
   });
 
-  final VoidCallback onContinue;
+  final ValueChanged<AuthenticatedUser> onContinue;
   final AuthRepository authRepository;
 
   @override
@@ -413,8 +413,13 @@ class _LoginPageState extends State<LoginPage>
     );
     if (!mounted) return;
     if (result.isSuccess) {
+      final authenticatedUser = AuthenticatedUser.fromLoginData(
+        result.data,
+        fallbackIdentifier: _usuarioController.text.trim(),
+      );
+      _contrasenaController.clear();
       TextInput.finishAutofillContext();
-      widget.onContinue();
+      widget.onContinue(authenticatedUser);
       return;
     }
 

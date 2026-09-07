@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 
+import '../data/auth_repository.dart';
 import '../models/terreno.dart';
 import '../state/terreno_store.dart';
 import 'diagnostico_page.dart';
@@ -14,11 +15,15 @@ class AppShell extends StatefulWidget {
     super.key,
     required this.terrenoStore,
     required this.ownsStore,
+    required this.authenticatedUser,
+    required this.onLogout,
     this.mapTileProviderFactory,
   });
 
   final TerrenoStore terrenoStore;
   final bool ownsStore;
+  final AuthenticatedUser authenticatedUser;
+  final VoidCallback onLogout;
   final TileProvider Function()? mapTileProviderFactory;
 
   @override
@@ -58,6 +63,8 @@ class _AppShellState extends State<AppShell> {
       0 => InicioPage(
         terrenoStore: widget.terrenoStore,
         onOpenSection: _selectSection,
+        authenticatedUser: widget.authenticatedUser,
+        onLogout: widget.onLogout,
       ),
       1 => TerrenosPage(
         terrenoStore: widget.terrenoStore,

@@ -174,7 +174,7 @@ class _AppEntryState extends State<_AppEntry> {
   late final AuthRepository _authRepository;
   late final bool _ownsAuthRepository;
   bool _showSplash = true;
-  bool _isAuthenticated = false;
+  AuthenticatedUser? _authenticatedUser;
 
   @override
   void initState() {
@@ -203,17 +203,19 @@ class _AppEntryState extends State<_AppEntry> {
           if (mounted) setState(() => _showSplash = false);
         },
       );
-    } else if (_isAuthenticated) {
+    } else if (_authenticatedUser case final authenticatedUser?) {
       page = AppShell(
         key: const ValueKey('app'),
         terrenoStore: _terrenoStore,
         ownsStore: false,
+        authenticatedUser: authenticatedUser,
+        onLogout: () => setState(() => _authenticatedUser = null),
       );
     } else {
       page = LoginPage(
         key: const ValueKey('login'),
         authRepository: _authRepository,
-        onContinue: () => setState(() => _isAuthenticated = true),
+        onContinue: (user) => setState(() => _authenticatedUser = user),
       );
     }
 

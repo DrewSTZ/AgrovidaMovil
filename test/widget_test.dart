@@ -145,6 +145,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('muestra la cuenta conectada y permite cerrar sesión', (
+    tester,
+  ) async {
+    final store = TerrenoStore(_MemoryTerrenoRepository());
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(
+      AgroVidaApp(
+        terrenoStore: store,
+        authRepository: _SuccessfulAuthRepository(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeLogin(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sesión conectada'), findsOneWidget);
+    expect(find.text('Juan Pérez'), findsOneWidget);
+    expect(find.text('juan@gmail.com'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Cerrar sesión'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bienvenido'), findsOneWidget);
+    expect(find.text('Sesión conectada'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('abre un terreno de la lista directamente en su ubicación', (
     tester,
   ) async {
@@ -173,6 +205,14 @@ void main() {
         home: AppShell(
           terrenoStore: store,
           ownsStore: false,
+          authenticatedUser: const AuthenticatedUser(
+            username: 'juan',
+            email: 'juan@gmail.com',
+            names: 'Juan',
+            lastNames: 'Pérez',
+            role: 'Trabajador',
+          ),
+          onLogout: () {},
           mapTileProviderFactory: _WidgetTestTiles.new,
         ),
       ),
@@ -225,7 +265,18 @@ class _SuccessfulAuthRepository implements AuthRepository {
     required String usuario,
     required String contrasena,
   }) async {
-    return const LoginResult(isSuccess: true);
+    return const LoginResult(
+      isSuccess: true,
+      data: {
+        'user': {
+          'username': 'juan',
+          'email': 'juan@gmail.com',
+          'names': 'Juan',
+          'lastNames': 'Pérez',
+          'role': 'Trabajador',
+        },
+      },
+    );
   }
 
   @override

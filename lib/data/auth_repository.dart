@@ -18,6 +18,68 @@ class LoginResult {
   final Map<String, Object?> data;
 }
 
+class AuthenticatedUser {
+  const AuthenticatedUser({
+    required this.username,
+    required this.email,
+    required this.names,
+    required this.lastNames,
+    required this.role,
+  });
+
+  final String username;
+  final String email;
+  final String names;
+  final String lastNames;
+  final String role;
+
+  factory AuthenticatedUser.fromLoginData(
+    Map<String, Object?> data, {
+    required String fallbackIdentifier,
+  }) {
+    final rawUser = data['user'];
+    final user = rawUser is Map
+        ? rawUser.map((key, value) => MapEntry(key.toString(), value))
+        : const <String, Object?>{};
+
+    String read(String key) => user[key]?.toString().trim() ?? '';
+
+    final username = read('username');
+    final email = read('email');
+    return AuthenticatedUser(
+      username: username.isNotEmpty ? username : fallbackIdentifier,
+      email: email.isNotEmpty
+          ? email
+          : (fallbackIdentifier.contains('@') ? fallbackIdentifier : ''),
+      names: read('names'),
+      lastNames: read('lastNames'),
+      role: read('role'),
+    );
+  }
+
+  String get displayName {
+    final fullName = [
+      names,
+      lastNames,
+    ].where((part) => part.isNotEmpty).join(' ');
+    if (fullName.isNotEmpty) return fullName;
+    if (username.isNotEmpty) return username;
+    return email;
+  }
+
+  String get accountIdentifier => email.isNotEmpty ? email : username;
+
+  String get initials {
+    final parts = displayName
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'A';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+}
+
 abstract interface class AuthRepository {
   Future<LoginResult> login({
     required String usuario,
