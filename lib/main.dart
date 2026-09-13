@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'data/terreno_repository.dart';
 import 'data/auth_repository.dart';
+import 'data/parcela_repository.dart';
 import 'data/session_repository.dart';
 import 'screens/app_shell.dart';
 import 'screens/login_page.dart';
@@ -20,11 +21,13 @@ class AgroVidaApp extends StatelessWidget {
     super.key,
     this.terrenoStore,
     this.authRepository,
+    this.parcelaRepository,
     this.sessionRepository,
   });
 
   final TerrenoStore? terrenoStore;
   final AuthRepository? authRepository;
+  final ParcelaRepository? parcelaRepository;
   final SessionRepository? sessionRepository;
 
   @override
@@ -160,6 +163,7 @@ class AgroVidaApp extends StatelessWidget {
       home: _AppEntry(
         terrenoStore: terrenoStore,
         authRepository: authRepository,
+        parcelaRepository: parcelaRepository,
         sessionRepository: sessionRepository,
       ),
     );
@@ -170,11 +174,13 @@ class _AppEntry extends StatefulWidget {
   const _AppEntry({
     this.terrenoStore,
     this.authRepository,
+    this.parcelaRepository,
     this.sessionRepository,
   });
 
   final TerrenoStore? terrenoStore;
   final AuthRepository? authRepository;
+  final ParcelaRepository? parcelaRepository;
   final SessionRepository? sessionRepository;
 
   @override
@@ -186,6 +192,8 @@ class _AppEntryState extends State<_AppEntry> {
   late final bool _ownsStore;
   late final AuthRepository _authRepository;
   late final bool _ownsAuthRepository;
+  late final ParcelaRepository _parcelaRepository;
+  late final bool _ownsParcelaRepository;
   late final SessionRepository _sessionRepository;
   bool _splashFinished = false;
   bool _sessionRestored = false;
@@ -199,6 +207,8 @@ class _AppEntryState extends State<_AppEntry> {
         widget.terrenoStore ?? TerrenoStore(SqliteTerrenoRepository.instance);
     _ownsAuthRepository = widget.authRepository == null;
     _authRepository = widget.authRepository ?? HttpAuthRepository();
+    _ownsParcelaRepository = widget.parcelaRepository == null;
+    _parcelaRepository = widget.parcelaRepository ?? HttpParcelaRepository();
     _sessionRepository = widget.sessionRepository ?? SecureSessionRepository();
     _restoreSession();
   }
@@ -233,6 +243,7 @@ class _AppEntryState extends State<_AppEntry> {
   void dispose() {
     if (_ownsStore) _terrenoStore.dispose();
     if (_ownsAuthRepository) _authRepository.dispose();
+    if (_ownsParcelaRepository) _parcelaRepository.dispose();
     super.dispose();
   }
 
@@ -253,6 +264,7 @@ class _AppEntryState extends State<_AppEntry> {
         ownsStore: false,
         authenticatedUser: authenticatedUser,
         onLogout: _logout,
+        parcelaRepository: _parcelaRepository,
       );
     } else {
       page = LoginPage(

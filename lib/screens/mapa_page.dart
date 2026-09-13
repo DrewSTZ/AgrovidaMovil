@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/terreno.dart';
+import '../state/terreno_creation.dart';
 import '../state/terreno_store.dart';
 import '../widgets/lote_editor_panel.dart';
 import '../widgets/mapa_referencias_satelitales.dart';
@@ -20,6 +21,8 @@ class MapaPage extends StatefulWidget {
     required this.terrenoStore,
     this.terrenoInicial,
     this.tileProviderFactory,
+    this.onCreateTerreno,
+    this.onUpdateTerreno,
   });
 
   final TerrenoStore terrenoStore;
@@ -27,6 +30,8 @@ class MapaPage extends StatefulWidget {
   // Cada capa necesita su propio proveedor para cerrar sus conexiones al salir.
   // La fábrica también permite comprobar el mapa sin peticiones de red.
   final TileProvider Function()? tileProviderFactory;
+  final TerrenoCreator? onCreateTerreno;
+  final TerrenoUpdater? onUpdateTerreno;
 
   @override
   State<MapaPage> createState() => _MapaPageState();
@@ -597,11 +602,12 @@ class _MapaPageState extends State<MapaPage> {
     if (terreno == null || !mounted) return;
 
     try {
-      await widget.terrenoStore.crear(terreno);
+      final result = await _crearTerreno(terreno);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('“${terreno.nombre}” fue guardado.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+      if (!result.isSuccess) return;
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -744,25 +750,39 @@ class _MapaPageState extends State<MapaPage> {
     if (terreno == null || !mounted) return;
 
     try {
-      await widget.terrenoStore.crear(terreno);
+      final result = await _crearTerreno(terreno);
       if (!mounted) return;
+      if (!result.isSuccess) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
+        return;
+      }
       setState(() {
         _dibujandoBorde = false;
         _bordeBorrador.clear();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Lote "${terreno.nombre}" guardado con ${limite.length} puntos.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo guardar el lote.')),
       );
     }
+  }
+
+  Future<TerrenoCreationResult> _crearTerreno(Terreno terreno) async {
+    final creator = widget.onCreateTerreno;
+    if (creator != null) return creator(terreno);
+
+    await widget.terrenoStore.crear(terreno);
+    return TerrenoCreationResult(
+      isSuccess: true,
+      message:
+          'Lote "${terreno.nombre}" guardado con ${terreno.limite.length} puntos.',
+    );
   }
 
   LatLng _centroDelBorde(List<LatLng> puntos) {
@@ -884,6 +904,28 @@ class _MapaPageState extends State<MapaPage> {
   Future<void> _editTerreno(Terreno terreno) async {
     final updated = await showTerrenoFormDialog(context, terreno: terreno);
     if (updated == null || !mounted) return;
-    await widget.terrenoStore.actualizar(updated);
+    try {
+      final updater = widget.onUpdateTerreno;
+      final result = updater == null
+          ? await _actualizarSoloEnTelefono(updated)
+          : await updater(updated);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo actualizar la parcela.')),
+      );
+    }
+  }
+
+  Future<TerrenoUpdateResult> _actualizarSoloEnTelefono(Terreno terreno) async {
+    await widget.terrenoStore.actualizar(terreno);
+    return const TerrenoUpdateResult(
+      isSuccess: true,
+      message: 'Terreno actualizado.',
+    );
   }
 }

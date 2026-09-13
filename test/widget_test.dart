@@ -198,6 +198,7 @@ void main() {
     final sessionRepository = _MemorySessionRepository(
       user: const AuthenticatedUser(
         publicId: 'usuario-publico-1',
+        workerPublicId: 'trabajador-publico-1',
         username: 'juan',
         email: 'juan@gmail.com',
         names: 'Juan',
@@ -321,6 +322,7 @@ class _SuccessfulAuthRepository implements AuthRepository {
           'lastNames': 'Pérez',
           'role': 'Trabajador',
         },
+        'worker': {'publicId': 'trabajador-publico-1'},
       },
     );
   }

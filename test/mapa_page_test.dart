@@ -68,6 +68,10 @@ void main() {
       await tester.tap(find.text('Guardar lote'));
       await tester.pumpAndSettle();
       await tester.enterText(
+        find.widgetWithText(TextFormField, 'Nombre de la finca'),
+        'Finca El Paraíso',
+      );
+      await tester.enterText(
         find.widgetWithText(TextFormField, 'Nombre del terreno'),
         'Lote norte',
       );

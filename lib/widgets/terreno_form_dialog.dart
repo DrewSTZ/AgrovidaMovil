@@ -39,7 +39,10 @@ class _TerrenoFormDialog extends StatefulWidget {
 
 class _TerrenoFormDialogState extends State<_TerrenoFormDialog> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _fincaNombreController;
+  late final TextEditingController _fincaDescripcionController;
   late final TextEditingController _nombreController;
+  late final TextEditingController _descripcionController;
   late final TextEditingController _propietarioController;
   late final TextEditingController _latitudController;
   late final TextEditingController _longitudController;
@@ -48,7 +51,20 @@ class _TerrenoFormDialogState extends State<_TerrenoFormDialog> {
   void initState() {
     super.initState();
     final terreno = widget.terreno;
+    _fincaNombreController = TextEditingController(
+      text: terreno == null
+          ? ''
+          : (terreno.fincaNombre.isNotEmpty
+                ? terreno.fincaNombre
+                : terreno.nombre),
+    );
+    _fincaDescripcionController = TextEditingController(
+      text: terreno?.fincaDescripcion ?? '',
+    );
     _nombreController = TextEditingController(text: terreno?.nombre ?? '');
+    _descripcionController = TextEditingController(
+      text: terreno?.descripcion ?? '',
+    );
     _propietarioController = TextEditingController(
       text: terreno?.propietario ?? '',
     );
@@ -62,7 +78,10 @@ class _TerrenoFormDialogState extends State<_TerrenoFormDialog> {
 
   @override
   void dispose() {
+    _fincaNombreController.dispose();
+    _fincaDescripcionController.dispose();
     _nombreController.dispose();
+    _descripcionController.dispose();
     _propietarioController.dispose();
     _latitudController.dispose();
     _longitudController.dispose();
@@ -84,11 +103,11 @@ class _TerrenoFormDialogState extends State<_TerrenoFormDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: _nombreController,
+                  controller: _fincaNombreController,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Nombre del terreno',
-                    prefixIcon: Icon(Icons.grid_view_outlined),
+                    labelText: 'Nombre de la finca',
+                    prefixIcon: Icon(Icons.agriculture_outlined),
                   ),
                   validator: _requiredValidator,
                 ),
@@ -101,6 +120,46 @@ class _TerrenoFormDialogState extends State<_TerrenoFormDialog> {
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                   validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _fincaDescripcionController,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción de la finca (opcional)',
+                    prefixIcon: Icon(Icons.notes_outlined),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Datos de la parcela',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _nombreController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre del terreno',
+                    prefixIcon: Icon(Icons.grid_view_outlined),
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descripcionController,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción de la parcela (opcional)',
+                    prefixIcon: Icon(Icons.notes_outlined),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -195,8 +254,12 @@ class _TerrenoFormDialogState extends State<_TerrenoFormDialog> {
       context,
       Terreno(
         id: original?.id,
+        parcelaPublicId: original?.parcelaPublicId ?? '',
         nombre: _nombreController.text.trim(),
         propietario: _propietarioController.text.trim(),
+        fincaNombre: _fincaNombreController.text.trim(),
+        fincaDescripcion: _fincaDescripcionController.text.trim(),
+        descripcion: _descripcionController.text.trim(),
         latitud: _parseCoordinate(_latitudController.text)!,
         longitud: _parseCoordinate(_longitudController.text)!,
         creadoEn: original?.creadoEn ?? DateTime.now(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/terreno.dart';
+import '../state/terreno_creation.dart';
 import '../state/terreno_store.dart';
 import '../widgets/terreno_form_dialog.dart';
 import 'terreno_detalle_page.dart';
@@ -12,10 +13,16 @@ class TerrenosPage extends StatefulWidget {
     super.key,
     required this.terrenoStore,
     required this.onShowOnMap,
+    this.onCreateTerreno,
+    this.onUpdateTerreno,
+    this.onDeleteTerreno,
   });
 
   final TerrenoStore terrenoStore;
   final ValueChanged<Terreno> onShowOnMap;
+  final TerrenoCreator? onCreateTerreno;
+  final TerrenoUpdater? onUpdateTerreno;
+  final TerrenoDeleter? onDeleteTerreno;
 
   @override
   State<TerrenosPage> createState() => _TerrenosPageState();
@@ -60,7 +67,7 @@ class _TerrenosPageState extends State<TerrenosPage> {
                                     ),
                                   ),
                                   SizedBox(height: 3),
-                                  Text('Guardados localmente en este teléfono'),
+                                  Text('Parcelas registradas en AgroVida'),
                                 ],
                               ),
                             ),
@@ -189,9 +196,28 @@ class _TerrenosPageState extends State<TerrenosPage> {
   Future<void> _createTerreno() async {
     final terreno = await showTerrenoFormDialog(context);
     if (terreno == null || !mounted) return;
-    await _runStoreAction(
-      () => widget.terrenoStore.crear(terreno),
-      successMessage: 'Terreno guardado en el teléfono.',
+    try {
+      final creator = widget.onCreateTerreno;
+      final result = creator == null
+          ? await _crearSoloEnTelefono(terreno)
+          : await creator(terreno);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo registrar la parcela.')),
+      );
+    }
+  }
+
+  Future<TerrenoCreationResult> _crearSoloEnTelefono(Terreno terreno) async {
+    await widget.terrenoStore.crear(terreno);
+    return const TerrenoCreationResult(
+      isSuccess: true,
+      message: 'Terreno guardado en el teléfono.',
     );
   }
 
@@ -206,9 +232,28 @@ class _TerrenosPageState extends State<TerrenosPage> {
   Future<void> _editTerreno(Terreno terreno) async {
     final updated = await showTerrenoFormDialog(context, terreno: terreno);
     if (updated == null || !mounted) return;
-    await _runStoreAction(
-      () => widget.terrenoStore.actualizar(updated),
-      successMessage: 'Terreno actualizado.',
+    try {
+      final updater = widget.onUpdateTerreno;
+      final result = updater == null
+          ? await _actualizarSoloEnTelefono(updated)
+          : await updater(updated);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(result.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo actualizar la parcela.')),
+      );
+    }
+  }
+
+  Future<TerrenoUpdateResult> _actualizarSoloEnTelefono(Terreno terreno) async {
+    await widget.terrenoStore.actualizar(terreno);
+    return const TerrenoUpdateResult(
+      isSuccess: true,
+      message: 'Terreno actualizado.',
     );
   }
 
@@ -231,28 +276,32 @@ class _TerrenosPageState extends State<TerrenosPage> {
       ),
     );
     if (confirmed != true || !mounted || terreno.id == null) return;
-    await _runStoreAction(
-      () => widget.terrenoStore.eliminar(terreno.id!),
-      successMessage: 'Terreno eliminado.',
-    );
-  }
 
-  Future<void> _runStoreAction(
-    Future<void> Function() action, {
-    required String successMessage,
-  }) async {
     try {
-      await action();
+      final deleter = widget.onDeleteTerreno;
+      final result = deleter == null
+          ? await _eliminarSoloDelTelefono(terreno)
+          : await deleter(terreno);
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(successMessage)));
+      ).showSnackBar(SnackBar(content: Text(result.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo completar la operación.')),
+        const SnackBar(content: Text('No se pudo eliminar la parcela.')),
       );
     }
+  }
+
+  Future<TerrenoDeletionResult> _eliminarSoloDelTelefono(
+    Terreno terreno,
+  ) async {
+    await widget.terrenoStore.eliminar(terreno.id!);
+    return const TerrenoDeletionResult(
+      isSuccess: true,
+      message: 'Terreno eliminado.',
+    );
   }
 }
 

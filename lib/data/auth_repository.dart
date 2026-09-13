@@ -21,6 +21,7 @@ class LoginResult {
 class AuthenticatedUser {
   const AuthenticatedUser({
     this.publicId = '',
+    this.workerPublicId = '',
     required this.username,
     required this.email,
     required this.names,
@@ -29,6 +30,7 @@ class AuthenticatedUser {
   });
 
   final String publicId;
+  final String workerPublicId;
   final String username;
   final String email;
   final String names;
@@ -43,13 +45,19 @@ class AuthenticatedUser {
     final user = rawUser is Map
         ? rawUser.map((key, value) => MapEntry(key.toString(), value))
         : const <String, Object?>{};
+    final rawWorker = data['worker'];
+    final worker = rawWorker is Map
+        ? rawWorker.map((key, value) => MapEntry(key.toString(), value))
+        : const <String, Object?>{};
 
     String read(String key) => user[key]?.toString().trim() ?? '';
+    String readWorker(String key) => worker[key]?.toString().trim() ?? '';
 
     final username = read('username');
     final email = read('email');
     return AuthenticatedUser(
       publicId: read('publicId'),
+      workerPublicId: readWorker('publicId'),
       username: username.isNotEmpty ? username : fallbackIdentifier,
       email: email.isNotEmpty
           ? email
@@ -65,6 +73,7 @@ class AuthenticatedUser {
 
     return AuthenticatedUser(
       publicId: read('publicId'),
+      workerPublicId: read('workerPublicId'),
       username: read('username'),
       email: read('email'),
       names: read('names'),
@@ -75,6 +84,7 @@ class AuthenticatedUser {
 
   Map<String, Object?> toStoredData() => {
     'publicId': publicId,
+    'workerPublicId': workerPublicId,
     'username': username,
     'email': email,
     'names': names,

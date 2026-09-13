@@ -15,7 +15,7 @@ class AgrovidaDatabase {
     final databasePath = join(await getDatabasesPath(), 'agrovida.db');
     final database = await openDatabase(
       databasePath,
-      version: 4,
+      version: 6,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -36,6 +36,22 @@ class AgrovidaDatabase {
         if (oldVersion < 4) {
           await _createActividadesTable(db);
         }
+        if (oldVersion < 5) {
+          await db.execute(
+            "ALTER TABLE terrenos ADD COLUMN finca_nombre TEXT NOT NULL DEFAULT ''",
+          );
+          await db.execute(
+            "ALTER TABLE terrenos ADD COLUMN finca_descripcion TEXT NOT NULL DEFAULT ''",
+          );
+          await db.execute(
+            "ALTER TABLE terrenos ADD COLUMN descripcion TEXT NOT NULL DEFAULT ''",
+          );
+        }
+        if (oldVersion < 6) {
+          await db.execute(
+            "ALTER TABLE terrenos ADD COLUMN parcela_public_id TEXT NOT NULL DEFAULT ''",
+          );
+        }
       },
     );
     _database = database;
@@ -46,8 +62,12 @@ class AgrovidaDatabase {
     await db.execute('''
       CREATE TABLE terrenos(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parcela_public_id TEXT NOT NULL DEFAULT '',
         nombre TEXT NOT NULL,
         propietario TEXT NOT NULL,
+        finca_nombre TEXT NOT NULL DEFAULT '',
+        finca_descripcion TEXT NOT NULL DEFAULT '',
+        descripcion TEXT NOT NULL DEFAULT '',
         latitud REAL NOT NULL,
         longitud REAL NOT NULL,
         creado_en TEXT NOT NULL,

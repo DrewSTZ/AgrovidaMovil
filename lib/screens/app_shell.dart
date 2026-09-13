@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import '../data/auth_repository.dart';
+import '../data/parcela_repository.dart';
 import '../models/terreno.dart';
+import '../state/terreno_creation.dart';
 import '../state/terreno_store.dart';
 import 'diagnostico_page.dart';
 import 'inicio_page.dart';
@@ -17,6 +19,7 @@ class AppShell extends StatefulWidget {
     required this.ownsStore,
     required this.authenticatedUser,
     required this.onLogout,
+    this.parcelaRepository,
     this.mapTileProviderFactory,
   });
 
@@ -24,6 +27,7 @@ class AppShell extends StatefulWidget {
   final bool ownsStore;
   final AuthenticatedUser authenticatedUser;
   final Future<void> Function() onLogout;
+  final ParcelaRepository? parcelaRepository;
   final TileProvider Function()? mapTileProviderFactory;
 
   @override
@@ -69,11 +73,16 @@ class _AppShellState extends State<AppShell> {
       1 => TerrenosPage(
         terrenoStore: widget.terrenoStore,
         onShowOnMap: _showTerrenoOnMap,
+        onCreateTerreno: _crearTerreno,
+        onUpdateTerreno: _editarTerreno,
+        onDeleteTerreno: _eliminarTerreno,
       ),
       2 => MapaPage(
         terrenoStore: widget.terrenoStore,
         terrenoInicial: _terrenoParaMapa,
         tileProviderFactory: widget.mapTileProviderFactory,
+        onCreateTerreno: _crearTerreno,
+        onUpdateTerreno: _editarTerreno,
       ),
       _ => const DiagnosticoPage(),
     };
@@ -149,5 +158,180 @@ class _AppShellState extends State<AppShell> {
       ..showSnackBar(
         SnackBar(content: Text('Mostrando “${terreno.nombre}” en el mapa.')),
       );
+  }
+
+  Future<TerrenoCreationResult> _crearTerreno(Terreno terreno) async {
+    final parcelas = widget.parcelaRepository;
+    if (parcelas == null) {
+      await widget.terrenoStore.crear(terreno);
+      return const TerrenoCreationResult(
+        isSuccess: true,
+        message: 'Terreno guardado en el teléfono.',
+      );
+    }
+
+    final workerPublicId = widget.authenticatedUser.workerPublicId;
+    if (workerPublicId.isEmpty) {
+      return const TerrenoCreationResult(
+        isSuccess: false,
+        message:
+            'Esta sesión no tiene el identificador del trabajador. Cierra sesión y vuelve a ingresar.',
+      );
+    }
+
+    final remoteResult = await parcelas.crear(
+      workerPublicId: workerPublicId,
+      terreno: terreno,
+    );
+    if (!remoteResult.isSuccess) {
+      return TerrenoCreationResult(
+        isSuccess: false,
+        message: remoteResult.message ?? 'No se pudo registrar la parcela.',
+      );
+    }
+
+    try {
+      await widget.terrenoStore.crear(
+        terreno.copyWith(parcelaPublicId: remoteResult.parcelaPublicId),
+      );
+      if (remoteResult.parcelaPublicId.isEmpty) {
+        return const TerrenoCreationResult(
+          isSuccess: true,
+          message:
+              'La parcela se registró, pero el servidor no devolvió parcela_public_id. No podrá eliminarse desde la app todavía.',
+        );
+      }
+      return TerrenoCreationResult(
+        isSuccess: true,
+        message: remoteResult.message ?? 'Parcela registrada correctamente.',
+      );
+    } catch (_) {
+      return const TerrenoCreationResult(
+        isSuccess: true,
+        message:
+            'La parcela se registró en el servidor, pero no se pudo guardar la copia del teléfono.',
+      );
+    }
+  }
+
+  Future<TerrenoDeletionResult> _eliminarTerreno(Terreno terreno) async {
+    final localId = terreno.id;
+    if (localId == null) {
+      return const TerrenoDeletionResult(
+        isSuccess: false,
+        message: 'No se encontró el identificador local de la parcela.',
+      );
+    }
+
+    final parcelas = widget.parcelaRepository;
+    if (parcelas == null) {
+      await widget.terrenoStore.eliminar(localId);
+      return const TerrenoDeletionResult(
+        isSuccess: true,
+        message: 'Terreno eliminado.',
+      );
+    }
+
+    final workerPublicId = widget.authenticatedUser.workerPublicId;
+    if (workerPublicId.isEmpty) {
+      return const TerrenoDeletionResult(
+        isSuccess: false,
+        message:
+            'Esta sesión no tiene el identificador del trabajador. Cierra sesión y vuelve a ingresar.',
+      );
+    }
+    if (terreno.parcelaPublicId.isEmpty) {
+      return const TerrenoDeletionResult(
+        isSuccess: false,
+        message:
+            'Esta parcela fue guardada antes de recibir su identificador del servidor. No se puede eliminar desde la app todavía.',
+      );
+    }
+
+    final remoteResult = await parcelas.eliminar(
+      workerPublicId: workerPublicId,
+      parcelaPublicId: terreno.parcelaPublicId,
+    );
+    if (!remoteResult.isSuccess) {
+      return TerrenoDeletionResult(
+        isSuccess: false,
+        message: remoteResult.message ?? 'No se pudo eliminar la parcela.',
+      );
+    }
+
+    try {
+      await widget.terrenoStore.eliminar(localId);
+      return TerrenoDeletionResult(
+        isSuccess: true,
+        message: remoteResult.message ?? 'Parcela eliminada correctamente.',
+      );
+    } catch (_) {
+      return const TerrenoDeletionResult(
+        isSuccess: true,
+        message:
+            'La parcela se eliminó del servidor, pero no se pudo borrar la copia del teléfono.',
+      );
+    }
+  }
+
+  Future<TerrenoUpdateResult> _editarTerreno(Terreno terreno) async {
+    final localId = terreno.id;
+    if (localId == null) {
+      return const TerrenoUpdateResult(
+        isSuccess: false,
+        message: 'No se encontró el identificador local de la parcela.',
+      );
+    }
+
+    final parcelas = widget.parcelaRepository;
+    if (parcelas == null) {
+      await widget.terrenoStore.actualizar(terreno);
+      return const TerrenoUpdateResult(
+        isSuccess: true,
+        message: 'Terreno actualizado.',
+      );
+    }
+
+    final workerPublicId = widget.authenticatedUser.workerPublicId;
+    if (workerPublicId.isEmpty) {
+      return const TerrenoUpdateResult(
+        isSuccess: false,
+        message:
+            'Esta sesión no tiene el identificador del trabajador. Cierra sesión y vuelve a ingresar.',
+      );
+    }
+    if (terreno.parcelaPublicId.isEmpty) {
+      return const TerrenoUpdateResult(
+        isSuccess: false,
+        message:
+            'Esta parcela fue guardada antes de recibir su identificador del servidor. No se puede editar desde la app todavía.',
+      );
+    }
+
+    final remoteResult = await parcelas.editar(
+      workerPublicId: workerPublicId,
+      parcelaPublicId: terreno.parcelaPublicId,
+      terreno: terreno,
+    );
+    if (!remoteResult.isSuccess) {
+      return TerrenoUpdateResult(
+        isSuccess: false,
+        message: remoteResult.message ?? 'No se pudo actualizar la parcela.',
+      );
+    }
+
+    try {
+      await widget.terrenoStore.actualizar(terreno);
+      return TerrenoUpdateResult(
+        isSuccess: true,
+        message: remoteResult.message ?? 'Parcela actualizada correctamente.',
+      );
+    } catch (_) {
+      return const TerrenoUpdateResult(
+        isSuccess: true,
+        message:
+            'La parcela se actualizó en el servidor, pero no se pudo actualizar la copia del teléfono.',
+      );
+    }
   }
 }

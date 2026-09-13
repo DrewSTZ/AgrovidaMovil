@@ -6,6 +6,22 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  test('conserva el publicId del trabajador devuelto por el login', () {
+    final user = AuthenticatedUser.fromLoginData(const {
+      'user': {
+        'publicId': 'usuario-publico-1',
+        'username': 'juan',
+        'email': 'juan@gmail.com',
+        'names': 'Juan',
+        'lastNames': 'Pérez',
+        'role': 'Trabajador',
+      },
+      'worker': {'publicId': '9b7952be-8a55-4ae1-a609-b3ee2f79e593'},
+    }, fallbackIdentifier: 'juan@gmail.com');
+
+    expect(user.workerPublicId, '9b7952be-8a55-4ae1-a609-b3ee2f79e593');
+  });
+
   test('envía exactamente usuario y contrasena como JSON', () async {
     late http.Request sentRequest;
     final repository = HttpAuthRepository(
