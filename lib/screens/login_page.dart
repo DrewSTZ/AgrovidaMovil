@@ -20,14 +20,16 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
   static const _green = Color(0xFF123D2A);
+  static const _greenDark = Color(0xFF071F16);
+  static const _greenLight = Color(0xFF2A7650);
   static const _systemUiStyle = SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarBrightness: Brightness.light,
-    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.dark,
+    statusBarIconBrightness: Brightness.light,
     systemStatusBarContrastEnforced: false,
-    systemNavigationBarColor: Colors.white,
+    systemNavigationBarColor: _greenDark,
     systemNavigationBarDividerColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarIconBrightness: Brightness.light,
     systemNavigationBarContrastEnforced: false,
   );
 
@@ -69,68 +71,54 @@ class _LoginPageState extends State<LoginPage>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: _systemUiStyle,
       child: Scaffold(
-        backgroundColor: const Color(0xFFDDEFE5),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxHeight < 760;
-            final heroHeight = compact
-                ? 205.0
-                : (constraints.maxHeight * 0.37).clamp(255.0, 320.0);
-
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: heroHeight,
-                      child: _EntranceTransition(
-                        animation: _interval(0, 0.56),
-                        offset: 12,
-                        child: _AgroHero(compact: compact),
-                      ),
+        backgroundColor: _greenDark,
+        body: Stack(
+          children: [
+            const Positioned.fill(child: _LoginBackground()),
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxHeight < 820;
+                  return SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(
+                      22,
+                      compact ? 18 : 28,
+                      22,
+                      compact ? 18 : 26,
                     ),
-                    Container(
-                      width: double.infinity,
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight - heroHeight,
-                      ),
-                      padding: EdgeInsets.fromLTRB(
-                        24,
-                        compact ? 24 : 30,
-                        24,
-                        22 + MediaQuery.paddingOf(context).bottom,
-                      ),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(34),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: 460,
+                          minHeight: constraints.maxHeight > (compact ? 36 : 54)
+                              ? constraints.maxHeight - (compact ? 36 : 54)
+                              : 0,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x22071F16),
-                            blurRadius: 24,
-                            offset: Offset(0, -8),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 440),
-                          child: _EntranceTransition(
-                            animation: _interval(0.18, 0.86),
-                            offset: 26,
-                            child: _buildLoginPanel(context, compact),
-                          ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _EntranceTransition(
+                              animation: _interval(0, 0.5),
+                              offset: 18,
+                              child: _buildBrand(compact),
+                            ),
+                            SizedBox(height: compact ? 20 : 30),
+                            _EntranceTransition(
+                              animation: _interval(0.18, 0.82),
+                              offset: 28,
+                              child: _buildLoginCard(context, compact),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -143,195 +131,239 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildLoginPanel(BuildContext context, bool compact) {
-    return AutofillGroup(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Bienvenido',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF102219),
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
+  Widget _buildBrand(bool compact) {
+    return Column(
+      children: [
+        Container(
+          width: compact ? 68 : 78,
+          height: compact ? 68 : 78,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 1.5,
             ),
-            const SizedBox(height: 2),
-            const Text(
-              'a AgroVida',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _green,
-                fontSize: 25,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 24,
+                offset: Offset(0, 12),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Ingresa tus datos para gestionar tus terrenos y cultivos.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.35,
-              ),
-            ),
-            SizedBox(height: compact ? 20 : 26),
-            TextFormField(
-              controller: _usuarioController,
-              enabled: !_isEntering,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              autocorrect: false,
-              validator: _validateUsuario,
-              decoration: _inputDecoration(
-                label: 'Correo electrónico',
-                hint: 'nombre@empresa.com',
-                icon: Icons.alternate_email_rounded,
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _contrasenaController,
-              enabled: !_isEntering,
-              obscureText: _hidePassword,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.password],
-              validator: _validateContrasena,
-              onFieldSubmitted: (_) => _login(),
-              decoration:
-                  _inputDecoration(
-                    label: 'Contraseña',
-                    hint: 'Ingresa tu contraseña',
-                    icon: Icons.lock_outline_rounded,
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      tooltip: _hidePassword
-                          ? 'Mostrar contraseña'
-                          : 'Ocultar contraseña',
-                      onPressed: _isEntering
-                          ? null
-                          : () =>
-                                setState(() => _hidePassword = !_hidePassword),
-                      icon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        transitionBuilder: (child, animation) =>
-                            FadeTransition(opacity: animation, child: child),
-                        child: Icon(
-                          _hidePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          key: ValueKey(_hidePassword),
+            ],
+          ),
+          child: Icon(
+            Icons.eco_rounded,
+            color: Colors.white,
+            size: compact ? 38 : 44,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'AgroVida',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: compact ? 31 : 36,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Cultiva información. Mejora tus decisiones.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.78),
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginCard(BuildContext context, bool compact) {
+    return Material(
+      color: const Color(0xFFF8FBF8),
+      elevation: 12,
+      shadowColor: Colors.black38,
+      borderRadius: BorderRadius.circular(28),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 20 : 26,
+          compact ? 22 : 28,
+          compact ? 20 : 26,
+          compact ? 20 : 26,
+        ),
+        child: AutofillGroup(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Bienvenido',
+                  style: TextStyle(
+                    color: Color(0xFF102219),
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Ingrese sus datos',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+                SizedBox(height: compact ? 20 : 26),
+                TextFormField(
+                  controller: _usuarioController,
+                  enabled: !_isEntering,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  autocorrect: false,
+                  validator: _validateUsuario,
+                  decoration: _inputDecoration(
+                    label: 'Correo electrónico',
+                    hint: 'nombre@empresa.com',
+                    icon: Icons.alternate_email_rounded,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: _contrasenaController,
+                  enabled: !_isEntering,
+                  obscureText: _hidePassword,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
+                  validator: _validateContrasena,
+                  onFieldSubmitted: (_) => _login(),
+                  decoration:
+                      _inputDecoration(
+                        label: 'Contraseña',
+                        hint: 'Ingresa tu contraseña',
+                        icon: Icons.lock_outline_rounded,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          tooltip: _hidePassword
+                              ? 'Mostrar contraseña'
+                              : 'Ocultar contraseña',
+                          onPressed: _isEntering
+                              ? null
+                              : () => setState(
+                                  () => _hidePassword = !_hidePassword,
+                                ),
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 180),
+                            transitionBuilder: (child, animation) =>
+                                FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                ),
+                            child: Icon(
+                              _hidePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              key: ValueKey(_hidePassword),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-            ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: _loginError == null
-                  ? const SizedBox.shrink(key: ValueKey('without-error'))
-                  : Padding(
-                      key: const ValueKey('login-error'),
-                      padding: const EdgeInsets.only(top: 14),
-                      child: Semantics(
-                        liveRegion: true,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: 20,
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: _loginError == null
+                      ? const SizedBox.shrink(key: ValueKey('without-error'))
+                      : Padding(
+                          key: const ValueKey('login-error'),
+                          padding: const EdgeInsets.only(top: 14),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onErrorContainer,
+                                ).colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              const SizedBox(width: 9),
-                              Expanded(
-                                child: Text(
-                                  _loginError!,
-                                  style: TextStyle(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline_rounded,
+                                    size: 20,
                                     color: Theme.of(
                                       context,
                                     ).colorScheme.onErrorContainer,
                                   ),
-                                ),
+                                  const SizedBox(width: 9),
+                                  Expanded(
+                                    child: Text(
+                                      _loginError!,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onErrorContainer,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _isEntering ? null : _login,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(scale: animation, child: child),
-                ),
-                child: _isEntering
-                    ? const Row(
-                        key: ValueKey('loading'),
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 19,
-                            height: 19,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.3,
-                              color: Colors.white,
                             ),
                           ),
-                          SizedBox(width: 12),
-                          Text('Ingresando…'),
-                        ],
-                      )
-                    : const Row(
-                        key: ValueKey('ready'),
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Iniciar sesión'),
-                          SizedBox(width: 9),
-                          Icon(Icons.arrow_forward_rounded, size: 20),
-                        ],
-                      ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            const Row(
-              children: [
-                Icon(Icons.shield_outlined, size: 16, color: Color(0xFF557064)),
-                SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Acceso protegido a tu información de campo',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF557064), fontSize: 12),
+                        ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: _isEntering ? null : _login,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(54),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: animation, child: child),
+                    ),
+                    child: _isEntering
+                        ? const Row(
+                            key: ValueKey('loading'),
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 19,
+                                height: 19,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.3,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text('Ingresando…'),
+                            ],
+                          )
+                        : const Row(
+                            key: ValueKey('ready'),
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('Iniciar sesión'),
+                              SizedBox(width: 9),
+                              Icon(Icons.arrow_forward_rounded, size: 20),
+                            ],
+                          ),
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -347,19 +379,7 @@ class _LoginPageState extends State<LoginPage>
       hintText: hint,
       prefixIcon: Icon(icon),
       filled: true,
-      fillColor: const Color(0xFFF1F6F2),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFE1EAE3)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: _green, width: 1.6),
-      ),
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
     );
   }
@@ -410,212 +430,70 @@ class _LoginPageState extends State<LoginPage>
   }
 }
 
-class _AgroHero extends StatelessWidget {
-  const _AgroHero({required this.compact});
-
-  final bool compact;
+class _LoginBackground extends StatelessWidget {
+  const _LoginBackground();
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const CustomPaint(painter: _AgroLandscapePainter()),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(22, compact ? 8 : 14, 22, 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.94),
-                        borderRadius: BorderRadius.circular(13),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x22071F16),
-                            blurRadius: 12,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Image.asset(
-                        'assets/branding/agrovida_logo.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'AgroVida',
-                      style: TextStyle(
-                        color: Color(0xFF0A2A1D),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Center(
-                  child: FractionallySizedBox(
-                    widthFactor: 0.86,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0A2A1D).withValues(alpha: 0.78),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.28),
-                        ),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.spa_outlined,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          SizedBox(width: 7),
-                          Expanded(
-                            child: Text(
-                              'Tu campo, siempre contigo',
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _LoginPageState._greenDark,
+            _LoginPageState._green,
+            _LoginPageState._greenLight,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -90,
+            right: -65,
+            child: _GlowCircle(size: 250, opacity: 0.08),
+          ),
+          Positioned(
+            bottom: -120,
+            left: -85,
+            child: _GlowCircle(size: 310, opacity: 0.07),
+          ),
+          Positioned(
+            top: 110,
+            left: -26,
+            child: Transform.rotate(
+              angle: -0.45,
+              child: Icon(
+                Icons.eco_outlined,
+                size: 118,
+                color: Colors.white.withValues(alpha: 0.035),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _AgroLandscapePainter extends CustomPainter {
-  const _AgroLandscapePainter();
+class _GlowCircle extends StatelessWidget {
+  const _GlowCircle({required this.size, required this.opacity});
+
+  final double size;
+  final double opacity;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final sky = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFFDDF4EB), Color(0xFFAED9C4)],
-      ).createShader(Offset.zero & size);
-    canvas.drawRect(Offset.zero & size, sky);
-
-    final sun = Paint()..color = const Color(0xFFFFD77A);
-    canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.23), 30, sun);
-    _drawCloud(canvas, Offset(size.width * 0.12, size.height * 0.33), 0.75);
-    _drawCloud(canvas, Offset(size.width * 0.72, size.height * 0.4), 0.58);
-
-    final distantHill = Path()
-      ..moveTo(0, size.height * 0.58)
-      ..quadraticBezierTo(
-        size.width * 0.18,
-        size.height * 0.35,
-        size.width * 0.4,
-        size.height * 0.57,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.62,
-        size.height * 0.32,
-        size.width,
-        size.height * 0.57,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(distantHill, Paint()..color = const Color(0xFF78AB87));
-
-    final nearHill = Path()
-      ..moveTo(0, size.height * 0.69)
-      ..quadraticBezierTo(
-        size.width * 0.24,
-        size.height * 0.48,
-        size.width * 0.5,
-        size.height * 0.66,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.76,
-        size.height * 0.47,
-        size.width,
-        size.height * 0.64,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(nearHill, Paint()..color = const Color(0xFF3F8054));
-
-    final field = Path()
-      ..moveTo(0, size.height * 0.75)
-      ..quadraticBezierTo(
-        size.width * 0.48,
-        size.height * 0.67,
-        size.width,
-        size.height * 0.74,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(field, Paint()..color = const Color(0xFF236542));
-
-    final horizon = Offset(size.width * 0.52, size.height * 0.7);
-    final rowPaint = Paint()
-      ..color = const Color(0xFF8BC276)
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-    for (var index = -3; index <= 3; index++) {
-      final destinationX = size.width * (0.08 + ((index + 3) * 0.15));
-      canvas.drawLine(
-        horizon + Offset(index * 9, 0),
-        Offset(destinationX, size.height + 8),
-        rowPaint,
-      );
-    }
-  }
-
-  void _drawCloud(Canvas canvas, Offset center, double scale) {
-    final cloud = Paint()..color = Colors.white.withValues(alpha: 0.72);
-    canvas.drawOval(
-      Rect.fromCenter(center: center, width: 72 * scale, height: 25 * scale),
-      cloud,
-    );
-    canvas.drawCircle(
-      center + Offset(-18 * scale, -7 * scale),
-      15 * scale,
-      cloud,
-    );
-    canvas.drawCircle(
-      center + Offset(8 * scale, -12 * scale),
-      20 * scale,
-      cloud,
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: opacity),
+      ),
     );
   }
-
-  @override
-  bool shouldRepaint(covariant _AgroLandscapePainter oldDelegate) => false;
 }
 
 class _EntranceTransition extends StatelessWidget {
