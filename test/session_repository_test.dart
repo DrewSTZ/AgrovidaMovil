@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:agrovida_movil/data/auth_repository.dart';
-import 'package:agrovida_movil/data/session_repository.dart';
+import 'package:agrovida_movil/data/secure_session_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 

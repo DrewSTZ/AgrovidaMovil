@@ -14,6 +14,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
 void main() {
+  testWidgets('permite el acceso temporal sin consultar el login', (
+    tester,
+  ) async {
+    final store = TerrenoStore(_MemoryTerrenoRepository());
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(
+      AgroVidaApp(
+        terrenoStore: store,
+        authRepository: _SuccessfulAuthRepository(),
+        sessionRepository: _MemorySessionRepository(),
+        bypassLogin: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bienvenido'), findsNothing);
+    expect(find.text('Resumen de campo'), findsOneWidget);
+    expect(find.text('Cuenta de prueba'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('muestra la animación inicial antes del login', (tester) async {
     final store = TerrenoStore(_MemoryTerrenoRepository());
     addTearDown(store.dispose);

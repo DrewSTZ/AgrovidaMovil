@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 
 import '../models/actividad.dart';
+import '../services/lost_image_recovery.dart';
 
 class ActividadFormResult {
   const ActividadFormResult({
@@ -50,6 +52,15 @@ class _ActividadFormDialogState extends State<_ActividadFormDialog> {
   EstadoActividad _estado = EstadoActividad.pendiente;
   DateTime _fecha = DateTime.now();
   XFile? _evidencia;
+  bool _evidenciaRecuperada = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recuperarImagenPerdida();
+    });
+  }
 
   @override
   void dispose() {
@@ -163,11 +174,23 @@ class _ActividadFormDialogState extends State<_ActividadFormDialog> {
                     ),
                     IconButton(
                       tooltip: 'Quitar fotografía',
-                      onPressed: () => setState(() => _evidencia = null),
+                      onPressed: () => setState(() {
+                        _evidencia = null;
+                        _evidenciaRecuperada = false;
+                      }),
                       icon: const Icon(Icons.close),
                     ),
                   ],
                 ),
+                if (_evidenciaRecuperada)
+                  Text(
+                    'Fotografía recuperada después de una interrupción de Android.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
               ],
             ],
           ),
@@ -200,11 +223,46 @@ class _ActividadFormDialogState extends State<_ActividadFormDialog> {
         imageQuality: 85,
         maxWidth: 1600,
       );
-      if (imagen != null && mounted) setState(() => _evidencia = imagen);
+      if (imagen != null && mounted) {
+        setState(() {
+          _evidencia = imagen;
+          _evidenciaRecuperada = false;
+        });
+      }
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      final permissionDenied = error.code.toLowerCase().contains('denied') ||
+          error.code.toLowerCase().contains('permission');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            permissionDenied
+                ? 'Habilita el permiso de cámara o galería desde los ajustes del teléfono.'
+                : 'No se pudo obtener la fotografía. Inténtalo nuevamente.',
+          ),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo obtener la fotografía.')),
+        const SnackBar(
+          content: Text('No se pudo obtener la fotografía. Inténtalo nuevamente.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _recuperarImagenPerdida() async {
+    final recovered = await const LostImageRecovery().recover(_picker);
+    if (!mounted || recovered.isEmpty) return;
+    if (recovered.image != null) {
+      setState(() {
+        _evidencia = recovered.image;
+        _evidenciaRecuperada = true;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(recovered.errorMessage!)),
       );
     }
   }

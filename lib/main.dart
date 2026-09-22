@@ -13,7 +13,7 @@ import 'state/terreno_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  runApp(const AgroVidaApp());
+  runApp(const AgroVidaApp(bypassLogin: true));
 }
 
 class AgroVidaApp extends StatelessWidget {
@@ -23,12 +23,14 @@ class AgroVidaApp extends StatelessWidget {
     this.authRepository,
     this.parcelaRepository,
     this.sessionRepository,
+    this.bypassLogin = false,
   });
 
   final TerrenoStore? terrenoStore;
   final AuthRepository? authRepository;
   final ParcelaRepository? parcelaRepository;
   final SessionRepository? sessionRepository;
+  final bool bypassLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -165,6 +167,7 @@ class AgroVidaApp extends StatelessWidget {
         authRepository: authRepository,
         parcelaRepository: parcelaRepository,
         sessionRepository: sessionRepository,
+        bypassLogin: bypassLogin,
       ),
     );
   }
@@ -176,18 +179,28 @@ class _AppEntry extends StatefulWidget {
     this.authRepository,
     this.parcelaRepository,
     this.sessionRepository,
+    required this.bypassLogin,
   });
 
   final TerrenoStore? terrenoStore;
   final AuthRepository? authRepository;
   final ParcelaRepository? parcelaRepository;
   final SessionRepository? sessionRepository;
+  final bool bypassLogin;
 
   @override
   State<_AppEntry> createState() => _AppEntryState();
 }
 
 class _AppEntryState extends State<_AppEntry> {
+  static const _temporaryUser = AuthenticatedUser(
+    username: 'prueba_local',
+    email: 'prueba@agrovida.local',
+    names: 'Cuenta',
+    lastNames: 'de prueba',
+    role: 'Pruebas',
+  );
+
   late final TerrenoStore _terrenoStore;
   late final bool _ownsStore;
   late final AuthRepository _authRepository;
@@ -209,7 +222,8 @@ class _AppEntryState extends State<_AppEntry> {
     _authRepository = widget.authRepository ?? HttpAuthRepository();
     _ownsParcelaRepository = widget.parcelaRepository == null;
     _parcelaRepository = widget.parcelaRepository ?? HttpParcelaRepository();
-    _sessionRepository = widget.sessionRepository ?? SecureSessionRepository();
+    _sessionRepository =
+        widget.sessionRepository ?? TemporarySessionRepository();
     _restoreSession();
   }
 
@@ -263,6 +277,15 @@ class _AppEntryState extends State<_AppEntry> {
         terrenoStore: _terrenoStore,
         ownsStore: false,
         authenticatedUser: authenticatedUser,
+        onLogout: _logout,
+        parcelaRepository: _parcelaRepository,
+      );
+    } else if (widget.bypassLogin) {
+      page = AppShell(
+        key: const ValueKey('app-test-access'),
+        terrenoStore: _terrenoStore,
+        ownsStore: false,
+        authenticatedUser: _temporaryUser,
         onLogout: _logout,
         parcelaRepository: _parcelaRepository,
       );

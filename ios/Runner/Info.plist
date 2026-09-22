@@ -11,9 +11,9 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>AgroVida usa tu ubicación mientras la aplicación está abierta para ubicarte en el mapa y registrar terrenos.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>AgroVida usa la cámara para guardar una fotografía de evidencia de la actividad realizada en el terreno.</string>
+	<string>AgroVida usa la cámara para capturar fotografías de diagnóstico y evidencias de actividades en el terreno.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>AgroVida permite seleccionar una fotografía de evidencia para una actividad del terreno.</string>
+	<string>AgroVida permite seleccionar fotografías para diagnóstico y evidencias de actividades en el terreno.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
