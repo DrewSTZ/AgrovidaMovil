@@ -1,0 +1,68 @@
+{
+  "model": "ml/models/agrovida_banano_yolov8n_cls_v1.pt",
+  "dataset": "ml/data/dataset_v1",
+  "split": "test",
+  "classes": [
+    "cordana",
+    "saludable",
+    "sigatoka"
+  ],
+  "total": 238,
+  "correct": 230,
+  "errors": 8,
+  "accuracy": 0.96638655,
+  "macro_f1": 0.97383357,
+  "candidate_low_confidence_threshold": 0.7,
+  "below_candidate_threshold": 3,
+  "per_class": {
+    "cordana": {
+      "total": 96,
+      "correct": 95,
+      "errors": 1,
+      "accuracy_recall": 0.98958333,
+      "precision": 0.93137255,
+      "f1": 0.95959596,
+      "confused_as": {
+        "sigatoka": 1
+      }
+    },
+    "saludable": {
+      "total": 34,
+      "correct": 34,
+      "errors": 0,
+      "accuracy_recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "confused_as": {}
+    },
+    "sigatoka": {
+      "total": 108,
+      "correct": 101,
+      "errors": 7,
+      "accuracy_recall": 0.93518519,
+      "precision": 0.99019608,
+      "f1": 0.96190476,
+      "confused_as": {
+        "cordana": 7
+      }
+    }
+  },
+  "confusion_matrix": {
+    "cordana": {
+      "cordana": 95,
+      "saludable": 0,
+      "sigatoka": 1
+    },
+    "saludable": {
+      "cordana": 0,
+      "saludable": 34,
+      "sigatoka": 0
+    },
+    "sigatoka": {
+      "cordana": 7,
+      "saludable": 0,
+      "sigatoka": 101
+    }
+  },
+  "warning": "Baseline de investigación. El umbral de confianza es candidato y debe calibrarse antes de integrarlo. No sustituye un diagnóstico profesional."
+}

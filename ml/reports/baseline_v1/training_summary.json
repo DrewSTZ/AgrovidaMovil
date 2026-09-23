@@ -1,0 +1,26 @@
+{
+  "model_architecture": "yolov8n-cls.pt",
+  "dataset": "ml/data/dataset_v1",
+  "classes": [
+    "cordana",
+    "saludable",
+    "sigatoka"
+  ],
+  "epochs": 50,
+  "best_epoch": 37,
+  "batch": 64,
+  "imgsz": 224,
+  "seed": 42,
+  "framework": {
+    "ultralytics": "8.4.160",
+    "torch": "2.11.0+cu128"
+  },
+  "validation_top1_best": 0.97908,
+  "test_top1": 0.96638655,
+  "test_macro_f1": 0.97383357,
+  "test_images": 238,
+  "test_correct": 230,
+  "test_errors": 8,
+  "model_output": "ml/models/agrovida_banano_yolov8n_cls_v1.pt",
+  "warning": "Baseline de investigación; no sustituye un diagnóstico profesional o de laboratorio."
+}

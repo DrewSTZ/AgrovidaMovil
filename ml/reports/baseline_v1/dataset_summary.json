@@ -1,0 +1,32 @@
+{
+  "dataset": "AgroVida banana leaf classification v1",
+  "source_doi": "10.17632/hzttvh774g.1",
+  "license": "CC BY 4.0",
+  "seed": 42,
+  "source_images_found": 1773,
+  "unique_images": 1773,
+  "exact_duplicates_removed": 0,
+  "rejected_images": 0,
+  "source_groups": 17,
+  "counts": {
+    "train": {
+      "saludable": 460,
+      "sigatoka": 517,
+      "cordana": 319,
+      "total": 1296
+    },
+    "val": {
+      "saludable": 50,
+      "sigatoka": 99,
+      "cordana": 90,
+      "total": 239
+    },
+    "test": {
+      "saludable": 34,
+      "sigatoka": 108,
+      "cordana": 96,
+      "total": 238
+    }
+  },
+  "limitation": "La separación conserva cada fecha de captura en un solo subconjunto. La fuente no publica identificadores por finca o planta, por lo que no se puede garantizar independencia geográfica estricta."
+}

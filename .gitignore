@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# IA / semana 8: datos, entornos y resultados pesados se generan localmente.
+/ml/.venv/
+/ml/.ultralytics/
+/ml/data/
+/ml/runs/
+/ml/models/*.pt
+/ml/models/*.onnx
+/ml/requirements-lock.txt
+/weights/
+/*.pt
